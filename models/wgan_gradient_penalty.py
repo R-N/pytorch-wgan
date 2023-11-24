@@ -65,19 +65,19 @@ class Discriminator(torch.nn.Module):
             # Image (Cx32x32)
             nn.Conv2d(in_channels=channels, out_channels=256, kernel_size=4, stride=2, padding=1),
             #nn.LayerNorm([16, 16], elementwise_affine=True),
-            nn.InstanceNorm2d(256, affine=True),
+            #nn.InstanceNorm2d(256, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (256x16x16)
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=2, padding=1),
             #nn.LayerNorm([8, 8], elementwise_affine=True),
-            nn.InstanceNorm2d(512, affine=True),
+            #nn.InstanceNorm2d(512, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (512x8x8)
             nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=4, stride=2, padding=1),
             #nn.LayerNorm([4, 4], elementwise_affine=True),
-            nn.InstanceNorm2d(1024, affine=True),
+            #nn.InstanceNorm2d(1024, affine=True),
             nn.LeakyReLU(0.2, inplace=True)
         ]
         layers = [l for l in layers if l]
@@ -132,7 +132,7 @@ class WGAN_GP:
         self.learning_rate = 1e-4
         self.b1 = 0.5
         self.b2 = 0.999
-        self.batch_size = 64
+        self.batch_size = 32
 
         # WGAN_gradient penalty uses ADAM
         self.d_optimizer = optim.Adam(self.D.parameters(), lr=self.learning_rate, betas=(self.b1, self.b2))
