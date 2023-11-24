@@ -212,7 +212,7 @@ class WGAN_GP(nn.Module):
                 # Train with gradient penalty
                 #fake_images.requires_grad_(True)
                 #fake_images.retain_grad()
-                fake_images = Variable(fake_images, requires_grad=True)
+                #fake_images = Variable(fake_images, requires_grad=True)
                 gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
 
