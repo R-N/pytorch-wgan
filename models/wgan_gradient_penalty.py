@@ -388,9 +388,8 @@ class WGAN_GP:
                                    prob_interpolated.size()),
                                create_graph=True, retain_graph=True)[0]
 
-        print(gradients.shape)
-        grad_norm = gradients.view(gradients.shape[:2], -1).norm(2, dim=1)
-        grad_penalty = self.grad_penalty_loss() * self.lambda_term
+        grad_norm = gradients.view(*gradients.shape[:2], -1).norm(2, dim=1)
+        grad_penalty = self.grad_penalty_loss(grad_norm) * self.lambda_term
         #print(grad_penalty)
         return grad_penalty
     
