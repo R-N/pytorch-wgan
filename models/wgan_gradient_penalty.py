@@ -70,7 +70,7 @@ class Discriminator(torch.nn.Module):
 
             # State (256x16x16)
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=2, padding=1),
-            #nn.LayerNorm([8, 8], elementwise_affine=True),
+            nn.LayerNorm([8, 8], elementwise_affine=True),
             #nn.InstanceNorm2d(512, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
