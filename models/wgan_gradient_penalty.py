@@ -150,7 +150,10 @@ class WGAN_GP(nn.Module):
     def get_gradients(self):
         grads = []
         for param in self.parameters():
-            grads.append(param.grad.view(-1))
+            if param.grad is not None:
+                grads.append(param.grad.view(-1))
+            else:
+                grads.append(torch.zeros(param.shape, dtype=param.dtype, device=param.device))
         grads = torch.cat(grads)
         return grads
 
