@@ -33,6 +33,8 @@ def main(args):
     # Start model training
     if args.is_train == 'True':
         model.train(train_loader)
+        if hasattr(model, "plot_gp"):
+            model.plot_gp()
 
     # start evaluating on test data
     else:

@@ -10,6 +10,7 @@ import os
 from utils.tensorboard_logger import Logger
 from itertools import chain
 from torchvision import utils
+import numpy as np
 
 SAVE_PER_TIMES = 100
 
@@ -116,6 +117,9 @@ class WGAN_GP(object):
         self.critic_iter = 5
         self.lambda_term = 10
 
+        self.gp_history = []
+        self.gp_values = []
+
     def get_torch_variable(self, arg):
         if self.cuda:
             return Variable(arg).cuda(self.cuda_index)
@@ -155,6 +159,8 @@ class WGAN_GP(object):
             d_loss_real = 0
             d_loss_fake = 0
             Wasserstein_D = 0
+
+            gps = []
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
                 self.D.zero_grad()
@@ -187,11 +193,16 @@ class WGAN_GP(object):
                 gradient_penalty = self.calculate_gradient_penalty(images.data, fake_images.data)
                 gradient_penalty.backward()
 
+                gps.append(gradient_penalty.item())
 
                 d_loss = d_loss_fake - d_loss_real + gradient_penalty
                 Wasserstein_D = d_loss_real - d_loss_fake
                 self.d_optimizer.step()
                 print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}')
+
+            mean_gp = sum(gps)/len(gps)
+            self.gp_history.append(mean_gp)
+            self.gp_values.extend(gps)
 
             # Generator update
             for p in self.D.parameters():
@@ -273,14 +284,19 @@ class WGAN_GP(object):
                 for tag, images in info.items():
                     self.logger.image_summary(tag, images, g_iter + 1)
 
-
-
         self.t_end = t.time()
         print('Time of training-{}'.format((self.t_end - self.t_begin)))
+
+        self.gp_history = np.array(self.gp_history)
+        self.gp_values = np.array(self.gp_values)
         #self.file.close()
 
         # Save the trained parameters
         self.save_model()
+
+    def plot_gp(self):
+        np.histogram(self.gp_values)
+        plt.plot(self.gp_history)
 
     def evaluate(self, test_loader, D_model_path, G_model_path):
         self.load_model(D_model_path, G_model_path)
@@ -322,7 +338,7 @@ class WGAN_GP(object):
                                create_graph=True, retain_graph=True)[0]
 
         grad_penalty = self.grad_penalty_loss(gradients.norm(2, dim=1)) * self.lambda_term
-        print(grad_penalty)
+        #print(grad_penalty)
         return grad_penalty
     
     def grad_penalty_loss(self, grad_norm):
