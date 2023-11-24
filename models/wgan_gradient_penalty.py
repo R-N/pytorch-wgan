@@ -119,6 +119,8 @@ class WGAN_GP(object):
 
         self.gp_history = []
         self.gp_values = []
+        self.gp_grad_history = []
+        self.gp_grad_values = []
 
     def get_torch_variable(self, arg):
         if self.cuda:
@@ -161,6 +163,7 @@ class WGAN_GP(object):
             Wasserstein_D = 0
 
             gps = []
+            gp_grads = []
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
                 self.D.zero_grad()
@@ -190,19 +193,27 @@ class WGAN_GP(object):
                 d_loss_fake.backward(one)
 
                 # Train with gradient penalty
+                fake_images.data.requires_grad_(True)
                 gradient_penalty = self.calculate_gradient_penalty(images.data, fake_images.data)
                 gradient_penalty.backward()
+                gp_grad = fake_images.data.grad
+                gp_grad = gp_grad.norm(2, dim=-1)
+                gp_grad = gp_grad.sum(dim=-1)
 
                 gps.append(gradient_penalty.item())
+                gp_grads.append(gp_grad.item())
 
                 d_loss = d_loss_fake - d_loss_real + gradient_penalty
                 Wasserstein_D = d_loss_real - d_loss_fake
                 self.d_optimizer.step()
-                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, gp: {gradient_penalty}')
+                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, gp: {gradient_penalty}, gp_grad: {gp_grad}')
 
             mean_gp = sum(gps)/len(gps)
             self.gp_history.append(mean_gp)
             self.gp_values.extend(gps)
+            mean_gp_grad = sum(gp_grads)/len(gp_grads)
+            self.gp_grad_history.append(mean_gp_grad)
+            self.gp_grad_values.extend(gp_grads)
 
             # Generator update
             for p in self.D.parameters():
@@ -289,6 +300,8 @@ class WGAN_GP(object):
 
         self.gp_history = np.array(self.gp_history)
         self.gp_values = np.array(self.gp_values)
+        self.gp_grad_history = np.array(self.gp_grad_history)
+        self.gp_grad_values = np.array(self.gp_grad_values)
         #self.file.close()
 
         # Save the trained parameters
@@ -297,6 +310,8 @@ class WGAN_GP(object):
     def plot_gp(self):
         np.histogram(self.gp_values)
         plt.plot(self.gp_history)
+        np.histogram(self.gp_grad_values)
+        plt.plot(self.gp_grad_values)
 
     def evaluate(self, test_loader, D_model_path, G_model_path):
         self.load_model(D_model_path, G_model_path)
@@ -339,7 +354,7 @@ class WGAN_GP(object):
 
         grad_penalty = self.grad_penalty_loss(gradients.norm(2, dim=1)) * self.lambda_term
         #print(grad_penalty)
-        return grad_penalty
+        return grad_penalty, prob_interpolated
     
     def grad_penalty_loss(self, grad_norm):
         return ((grad_norm - 1) ** 2).mean()
