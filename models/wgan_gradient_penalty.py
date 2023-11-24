@@ -391,7 +391,8 @@ class WGAN_GP:
                                create_graph=True, retain_graph=True)[0]
 
         #gradients = gradients.view(*gradients.shape[:1], -1)
-        grad_norm = gradients.norm(2, dim=1)
+        #grad_norm = gradients.norm(2, dim=1)
+        grad_norm = (gradients.view(gradients.shape[0], -1) ** 2).sum(dim=1).sqrt()
         grad_penalty = self.grad_penalty_loss(grad_norm) * self.lambda_term
         #print(grad_penalty)
         return grad_penalty
