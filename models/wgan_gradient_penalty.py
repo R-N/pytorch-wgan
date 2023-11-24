@@ -11,6 +11,7 @@ from utils.tensorboard_logger import Logger
 from itertools import chain
 from torchvision import utils
 import numpy as np
+import torch
 
 SAVE_PER_TIMES = 100
 
@@ -339,6 +340,8 @@ class WGAN_GP:
 
                 for tag, images in info.items():
                     self.logger.image_summary(tag, images, g_iter + 1)
+            
+            torch.cuda.empty_cache()
 
         self.t_end = t.time()
         print('Time of training-{}'.format((self.t_end - self.t_begin)))
