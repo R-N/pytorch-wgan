@@ -199,6 +199,7 @@ class WGAN_GP:
 
                 images, z = self.get_torch_variable(images), self.get_torch_variable(z)
 
+                grad_0 = self.get_D_gradients()
                 # Train discriminator
                 # WGAN - Training discriminator more iterations than generator
                 # Train with real images
@@ -214,7 +215,7 @@ class WGAN_GP:
                 d_loss_fake = d_loss_fake.mean()
                 d_loss_fake.backward(one)
 
-                d_loss_grad = self.get_D_gradients()
+                d_loss_grad = self.get_D_gradients() - grad_0
 
                 # Train with gradient penalty
                 #fake_images.requires_grad_(True)
@@ -224,7 +225,7 @@ class WGAN_GP:
                 gradient_penalty.backward()
 
                 grad = self.get_D_gradients()
-                gp_grad = grad - d_loss_grad
+                gp_grad = grad - d_loss_grad - grad_0
 
                 d_loss_grad = reduce_grad(d_loss_grad)
                 gp_grad = reduce_grad(gp_grad)
