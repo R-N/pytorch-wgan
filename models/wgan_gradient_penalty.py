@@ -93,7 +93,7 @@ def reduce_grad(grad):
         grad = grad.sum(dim=-1)
     return grad
 
-class WGAN_GP(nn.Module):
+class WGAN_GP:
     def __init__(self, args):
         super().__init__()
         print("WGAN_GradientPenalty init model.")
@@ -147,9 +147,9 @@ class WGAN_GP(nn.Module):
         else:
             self.cuda = False
 
-    def get_gradients(self):
+    def get_D_gradients(self):
         grads = []
-        for param in self.parameters():
+        for param in self.D.parameters():
             if param.grad is not None:
                 grad = param.grad
             else:
@@ -216,12 +216,12 @@ class WGAN_GP(nn.Module):
                 gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
 
-                gp_grad = self.get_gradients().clone()
+                gp_grad = self.get_D_gradients().clone()
 
                 d_loss_real.backward(mone)
                 d_loss_fake.backward(one)
 
-                grad = self.get_gradients().clone()
+                grad = self.get_D_gradients().clone()
                 d_loss_grad = grad - gp_grad
 
                 d_loss_grad = reduce_grad(d_loss_grad)
