@@ -132,7 +132,7 @@ class WGAN_GP:
         self.learning_rate = 1e-4
         self.b1 = 0.5
         self.b2 = 0.999
-        self.batch_size = 32
+        self.batch_size = args.batch_size
 
         # WGAN_gradient penalty uses ADAM
         self.d_optimizer = optim.Adam(self.D.parameters(), lr=self.learning_rate, betas=(self.b1, self.b2))
@@ -145,7 +145,6 @@ class WGAN_GP:
 
         self.generator_iters = args.generator_iters
         self.critic_iter = 5
-        print("critic_iter", self.critic_iter)
         self.lambda_term = 10
 
         self.gp_history = []
@@ -202,7 +201,6 @@ class WGAN_GP:
             d_loss_grads = []
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
-                print("CRITIC")
                 self.D.zero_grad()
 
                 images = self.data.__next__()
