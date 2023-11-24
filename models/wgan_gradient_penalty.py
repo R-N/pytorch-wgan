@@ -151,6 +151,7 @@ class WGAN_GP(nn.Module):
         grads = []
         for param in self.parameters():
             if param.grad is not None:
+                print(param.shape, param.grad.shape)
                 grads.append(param.grad.view(-1))
             else:
                 grads.append(torch.zeros(param.shape, dtype=param.dtype, device=param.device))
@@ -184,7 +185,7 @@ class WGAN_GP(nn.Module):
             d_loss_grads = []
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
-                self.D.zero_grad()
+                self.D.zero_grad(False)
 
                 images = self.data.__next__()
                 # Check for batch to have full batch_size
