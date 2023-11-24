@@ -111,7 +111,7 @@ class WGAN_GP:
     def __init__(self, args):
         super().__init__()
         print("WGAN_GradientPenalty init model.")
-        self.G = Generator(in_channels=args.in_channels, channels=args.channels, norm=args.norm_G)
+        self.G = Generator(in_channels=args.in_channels, out_channels=args.channels, norm=args.norm_G)
         self.D = Discriminator(channels=args.channels)
         self.C = args.channels
 
