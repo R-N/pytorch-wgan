@@ -201,6 +201,7 @@ class WGAN_GP:
                 # Train with real images
                 d_loss_real = self.D(images)
                 d_loss_real = d_loss_real.mean()
+                d_loss_real.backward(mone)
 
                 # Train with fake images
                 z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
@@ -208,6 +209,9 @@ class WGAN_GP:
                 fake_images = self.G(z).detach()
                 d_loss_fake = self.D(fake_images)
                 d_loss_fake = d_loss_fake.mean()
+                d_loss_fake.backward(one)
+
+                d_loss_grad = self.get_D_gradients().clone()
 
                 # Train with gradient penalty
                 #fake_images.requires_grad_(True)
@@ -216,13 +220,8 @@ class WGAN_GP:
                 gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
 
-                gp_grad = self.get_D_gradients().clone()
-
-                d_loss_real.backward(mone)
-                d_loss_fake.backward(one)
-
                 grad = self.get_D_gradients().clone()
-                d_loss_grad = grad - gp_grad
+                gp_grad = grad - d_loss_grad
 
                 d_loss_grad = reduce_grad(d_loss_grad)
                 gp_grad = reduce_grad(gp_grad)
