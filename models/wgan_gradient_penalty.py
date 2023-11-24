@@ -87,6 +87,17 @@ class Discriminator(torch.nn.Module):
         x = self.main_module(x)
         return x.view(-1, 1024*4*4)
 
+    def get_gradients(self):
+        grads = []
+        for param in self.parameters():
+            if param.grad is not None:
+                grad = param.grad
+            else:
+                grad = torch.zeros(param.shape, dtype=param.dtype, device=param.device)
+            grads.append(grad.view(-1))
+        grads = torch.cat(grads).clone()
+        return grads
+
 def reduce_grad(grad):
     grad = grad.norm(2, dim=-1)
     if grad.dim() > 0:
@@ -148,15 +159,7 @@ class WGAN_GP:
             self.cuda = False
 
     def get_D_gradients(self):
-        grads = []
-        for param in self.D.parameters():
-            if param.grad is not None:
-                grad = param.grad
-            else:
-                grad = torch.zeros(param.shape, dtype=param.dtype, device=param.device)
-            grads.append(grad.view(-1))
-        grads = torch.cat(grads)
-        return grads
+        return self.D.get_gradients()
 
     def train(self, train_loader):
         self.t_begin = t.time()
@@ -211,7 +214,7 @@ class WGAN_GP:
                 d_loss_fake = d_loss_fake.mean()
                 d_loss_fake.backward(one)
 
-                d_loss_grad = self.get_D_gradients().clone()
+                d_loss_grad = self.get_D_gradients()
 
                 # Train with gradient penalty
                 #fake_images.requires_grad_(True)
@@ -220,7 +223,7 @@ class WGAN_GP:
                 gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
 
-                grad = self.get_D_gradients().clone()
+                grad = self.get_D_gradients()
                 gp_grad = grad - d_loss_grad
 
                 d_loss_grad = reduce_grad(d_loss_grad)
