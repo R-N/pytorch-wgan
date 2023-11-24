@@ -62,17 +62,17 @@ class Discriminator(torch.nn.Module):
             # There is not good & fast implementation of layer normalization --> using per instance normalization nn.InstanceNorm2d()
             # Image (Cx32x32)
             nn.Conv2d(in_channels=channels, out_channels=256, kernel_size=4, stride=2, padding=1),
-            #nn.InstanceNorm2d(256, affine=True),
+            nn.InstanceNorm2d(256, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (256x16x16)
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=2, padding=1),
-            #nn.InstanceNorm2d(512, affine=True),
+            nn.InstanceNorm2d(512, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (512x8x8)
             nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=4, stride=2, padding=1),
-            #nn.InstanceNorm2d(1024, affine=True),
+            nn.InstanceNorm2d(1024, affine=True),
             nn.LeakyReLU(0.2, inplace=True))
             # output of main module --> State (1024x4x4)
 
