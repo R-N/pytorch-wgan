@@ -193,10 +193,10 @@ class WGAN_GP(object):
                 d_loss_fake.backward(one)
 
                 # Train with gradient penalty
-                fake_images.data.requires_grad_(True)
-                gradient_penalty = self.calculate_gradient_penalty(images.data, fake_images.data)
+                fake_images.requires_grad_(True)
+                gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
-                gp_grad = fake_images.data.grad
+                gp_grad = fake_images.grad
                 gp_grad = gp_grad.norm(2, dim=-1)
                 gp_grad = gp_grad.sum(dim=-1)
 
