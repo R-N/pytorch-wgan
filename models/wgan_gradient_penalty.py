@@ -205,7 +205,7 @@ class WGAN_GP(nn.Module):
                 # Train with fake images
                 z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
 
-                fake_images = self.G(z)
+                fake_images = self.G(z).detach()
                 d_loss_fake = self.D(fake_images)
                 d_loss_fake = d_loss_fake.mean()
 
