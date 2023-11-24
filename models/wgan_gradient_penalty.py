@@ -205,7 +205,7 @@ class WGAN_GP:
                 # Train with real images
                 d_loss_real = self.D(images)
                 d_loss_real = d_loss_real.mean()
-                #d_loss_real.backward(mone)
+                d_loss_real.backward(mone)
 
                 # Train with fake images
                 z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
@@ -213,10 +213,10 @@ class WGAN_GP:
                 fake_images = self.G(z).detach()
                 d_loss_fake = self.D(fake_images)
                 d_loss_fake = d_loss_fake.mean()
-                #d_loss_fake.backward(one)
+                d_loss_fake.backward(one)
 
                 d_loss_diff = d_loss_fake - d_loss_real
-                d_loss_diff.backward()
+                #d_loss_diff.backward()
                 d_loss_grad = self.get_D_gradients()
 
                 # Train with gradient penalty
@@ -390,9 +390,9 @@ class WGAN_GP:
                                    prob_interpolated.size()),
                                create_graph=True, retain_graph=True)[0]
 
-        #gradients = gradients.view(*gradients.shape[:1], -1)
-        #grad_norm = gradients.norm(2, dim=1)
-        grad_norm = (gradients.view(gradients.shape[0], -1) ** 2).sum(dim=1).sqrt()
+        gradients = gradients.view(*gradients.shape[:1], -1)
+        grad_norm = gradients.norm(2, dim=-1)
+        #grad_norm = (gradients.view(gradients.shape[0], -1) ** 2).sum(dim=1).sqrt()
         grad_penalty = self.grad_penalty_loss(grad_norm) * self.lambda_term
         #print(grad_penalty)
         return grad_penalty
