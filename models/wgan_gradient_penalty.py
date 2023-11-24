@@ -56,24 +56,30 @@ class Discriminator(torch.nn.Module):
         # Filters [256, 512, 1024]
         # Input_dim = channels (Cx64x64)
         # Output_dim = 1
-        self.main_module = nn.Sequential(
+        layers = [
             # Omitting batch normalization in critic because our new penalized training objective (WGAN with gradient penalty) is no longer valid
             # in this setting, since we penalize the norm of the critic's gradient with respect to each input independently and not the enitre batch.
             # There is not good & fast implementation of layer normalization --> using per instance normalization nn.InstanceNorm2d()
             # Image (Cx32x32)
             nn.Conv2d(in_channels=channels, out_channels=256, kernel_size=4, stride=2, padding=1),
-            nn.InstanceNorm2d(256, affine=True),
+            nn.LayerNorm(256, affine=True),
+            #nn.InstanceNorm2d(256, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (256x16x16)
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=2, padding=1),
-            nn.InstanceNorm2d(512, affine=True),
+            nn.LayerNorm(512, affine=True),
+            #nn.InstanceNorm2d(512, affine=True),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (512x8x8)
             nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=4, stride=2, padding=1),
-            nn.InstanceNorm2d(1024, affine=True),
-            nn.LeakyReLU(0.2, inplace=True))
+            nn.LayerNorm(1024, affine=True),
+            #nn.InstanceNorm2d(1024, affine=True),
+            nn.LeakyReLU(0.2, inplace=True)
+        ]
+        layers = [l for l in layers if l]
+        self.main_module = nn.Sequential(*layers)
             # output of main module --> State (1024x4x4)
 
         self.output = nn.Sequential(
