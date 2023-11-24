@@ -2,7 +2,7 @@ import argparse
 import os
 
 
-def parse_args(s):
+def parse_args(s=None):
     parser = argparse.ArgumentParser(description="Pytorch implementation of GAN models.")
 
     parser.add_argument('--model', type=str, default='DCGAN', choices=['GAN', 'DCGAN', 'WGAN-CP', 'WGAN-GP'])
