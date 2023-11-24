@@ -21,7 +21,7 @@ class Generator(torch.nn.Module):
         # Filters [1024, 512, 256]
         # Input_dim = 100
         # Output_dim = C (number of channels)
-        norm=True
+        #norm=True
         layers = [
             # Z latent vector 100
             nn.ConvTranspose2d(in_channels=in_channels, out_channels=1024, kernel_size=4, stride=1, padding=0),
@@ -204,6 +204,8 @@ class WGAN_GP:
                 self.D.zero_grad()
 
                 images = self.data.__next__()
+
+                print("images min", torch.min(images))
                 # Check for batch to have full batch_size
                 if (images.size()[0] != self.batch_size):
                     continue
