@@ -87,6 +87,11 @@ class Discriminator(torch.nn.Module):
         x = self.main_module(x)
         return x.view(-1, 1024*4*4)
 
+def reduce_grad(grad):
+    grad = grad.norm(2, dim=-1)
+    if grad.dim() > 0:
+        grad = grad.sum(dim=-1)
+    return grad
 
 class WGAN_GP(nn.Module):
     def __init__(self, args):
@@ -122,6 +127,8 @@ class WGAN_GP(nn.Module):
         self.gp_values = []
         self.gp_grad_history = []
         self.gp_grad_values = []
+        self.d_loss_grad_history = []
+        self.d_loss_grad_values = []
 
     def get_torch_variable(self, arg):
         if self.cuda:
@@ -171,6 +178,7 @@ class WGAN_GP(nn.Module):
 
             gps = []
             gp_grads = []
+            d_loss_grads = []
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
                 self.D.zero_grad()
@@ -199,23 +207,28 @@ class WGAN_GP(nn.Module):
                 d_loss_fake = d_loss_fake.mean()
                 d_loss_fake.backward(one)
 
+                d_loss_grad = self.get_gradients().clone()
+
                 # Train with gradient penalty
                 #fake_images.requires_grad_(True)
                 #fake_images.retain_grad()
                 gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
-                gp_grad = self.get_gradients()
-                gp_grad = gp_grad.norm(2, dim=-1)
-                if gp_grad.dim() > 0:
-                    gp_grad = gp_grad.sum(dim=-1)
 
+                grad = self.get_gradients().clone()
+                gp_grad = grad - d_loss_grad
+
+                d_loss_grad = reduce_grad(d_loss_grad)
+                gp_grad = reduce_grad(gp_grad)
+                
                 gps.append(gradient_penalty.item())
                 gp_grads.append(gp_grad.item())
+                d_loss_grads.append(d_loss_grad.item())
 
                 d_loss = d_loss_fake - d_loss_real + gradient_penalty
                 Wasserstein_D = d_loss_real - d_loss_fake
                 self.d_optimizer.step()
-                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, gp: {gradient_penalty}, gp_grad: {gp_grad}')
+                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, gp: {gradient_penalty}, gp_grad: {gp_grad}, d_loss_grad: {d_loss_grad}')
 
             mean_gp = sum(gps)/len(gps)
             self.gp_history.append(mean_gp)
@@ -223,6 +236,9 @@ class WGAN_GP(nn.Module):
             mean_gp_grad = sum(gp_grads)/len(gp_grads)
             self.gp_grad_history.append(mean_gp_grad)
             self.gp_grad_values.extend(gp_grads)
+            mean_d_loss_grad = sum(d_loss_grads)/len(d_loss_grads)
+            self.d_loss_grad_history.append(mean_d_loss_grad)
+            self.d_loss_grad_values.extend(d_loss_grads)
 
             # Generator update
             for p in self.D.parameters():
@@ -320,7 +336,9 @@ class WGAN_GP(nn.Module):
         np.histogram(self.gp_values)
         plt.plot(self.gp_history)
         np.histogram(self.gp_grad_values)
-        plt.plot(self.gp_grad_values)
+        plt.plot(self.gp_grad_history)
+        np.histogram(self.d_loss_grad_values)
+        plt.plot(self.d_loss_grad_history)
 
     def evaluate(self, test_loader, D_model_path, G_model_path):
         self.load_model(D_model_path, G_model_path)
