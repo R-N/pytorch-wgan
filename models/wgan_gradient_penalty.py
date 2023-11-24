@@ -354,7 +354,7 @@ class WGAN_GP(object):
 
         grad_penalty = self.grad_penalty_loss(gradients.norm(2, dim=1)) * self.lambda_term
         #print(grad_penalty)
-        return grad_penalty, prob_interpolated
+        return grad_penalty
     
     def grad_penalty_loss(self, grad_norm):
         return ((grad_norm - 1) ** 2).mean()
