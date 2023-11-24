@@ -14,7 +14,7 @@ class WGAN_GP_CUSTOM(WGAN_GP):
         self.loss_fn = loss_fn
 
     def grad_penalty_loss(self, grad_norm):
-        return self.loss_fn(grad_norm)
+        return self.loss_fn(grad_norm, torch.ones(grad_norm.shape))
 
 class WGAN_GP_MILE(WGAN_GP_CUSTOM):
     def __init__(self, args):
