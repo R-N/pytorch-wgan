@@ -205,7 +205,6 @@ class WGAN_GP:
 
                 images = self.data.__next__()
 
-                print("images min", torch.min(images))
                 # Check for batch to have full batch_size
                 if (images.size()[0] != self.batch_size):
                     continue
