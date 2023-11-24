@@ -145,6 +145,7 @@ class WGAN_GP:
 
         self.generator_iters = args.generator_iters
         self.critic_iter = 5
+        print("critic_iter", self.critic_iter)
         self.lambda_term = 10
 
         self.gp_history = []
@@ -201,6 +202,7 @@ class WGAN_GP:
             d_loss_grads = []
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
+                print("CRITIC")
                 self.D.zero_grad()
 
                 images = self.data.__next__()
