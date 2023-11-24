@@ -199,13 +199,13 @@ class WGAN_GP:
 
                 images, z = self.get_torch_variable(images), self.get_torch_variable(z)
 
-                grad_0 = self.get_D_gradients()
+                #grad_0 = self.get_D_gradients()
                 # Train discriminator
                 # WGAN - Training discriminator more iterations than generator
                 # Train with real images
                 d_loss_real = self.D(images)
                 d_loss_real = d_loss_real.mean()
-                d_loss_real.backward(mone)
+                #d_loss_real.backward(mone)
 
                 # Train with fake images
                 z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
@@ -213,10 +213,11 @@ class WGAN_GP:
                 fake_images = self.G(z).detach()
                 d_loss_fake = self.D(fake_images)
                 d_loss_fake = d_loss_fake.mean()
-                d_loss_fake.backward(one)
+                #d_loss_fake.backward(one)
 
-                d_loss = d_loss_real - d_loss_fake
-                d_loss_grad = self.get_D_gradients() - grad_0
+                d_loss_diff = d_loss_fake - d_loss_real
+                d_loss_diff.backward()
+                d_loss_grad = self.get_D_gradients()
 
                 # Train with gradient penalty
                 #fake_images.requires_grad_(True)
@@ -226,7 +227,7 @@ class WGAN_GP:
                 gradient_penalty.backward()
 
                 grad = self.get_D_gradients()
-                gp_grad = grad - d_loss_grad - grad_0
+                gp_grad = grad - d_loss_grad
 
                 d_loss_grad = reduce_grad(d_loss_grad)
                 gp_grad = reduce_grad(gp_grad)
@@ -238,7 +239,7 @@ class WGAN_GP:
                 d_loss = d_loss_fake - d_loss_real + gradient_penalty
                 Wasserstein_D = d_loss_real - d_loss_fake
                 self.d_optimizer.step()
-                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, loss: {d_loss}, gp: {gradient_penalty}, gp_grad: {gp_grad}, d_loss_grad: {d_loss_grad}')
+                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, loss_diff: {d_loss_diff}, gp: {gradient_penalty}, gp_grad: {gp_grad}, d_loss_grad: {d_loss_grad}')
 
             mean_gp = sum(gps)/len(gps)
             self.gp_history.append(mean_gp)
