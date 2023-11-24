@@ -5,6 +5,7 @@ from models.gan import GAN
 from models.dcgan import DCGAN_MODEL
 from models.wgan_clipping import WGAN_CP
 from models.wgan_gradient_penalty import WGAN_GP
+from models.wgan_gp_custom import WGAN_GP_MILE, WGAN_GP_MIRE
 
 
 def main(args):
@@ -17,6 +18,10 @@ def main(args):
         model = WGAN_CP(args)
     elif args.model == 'WGAN-GP':
         model = WGAN_GP(args)
+    elif args.model == 'WGAN-GP-MILE':
+        model = WGAN_GP_MILE(args)
+    elif args.model == 'WGAN-GP-MIRE':
+        model = WGAN_GP_MIRE(args)
     else:
         print("Model type non-existing. Try again.")
         exit(-1)
