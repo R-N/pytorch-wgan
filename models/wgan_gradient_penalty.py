@@ -198,7 +198,7 @@ class WGAN_GP(object):
                 d_loss = d_loss_fake - d_loss_real + gradient_penalty
                 Wasserstein_D = d_loss_real - d_loss_fake
                 self.d_optimizer.step()
-                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}')
+                print(f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}, gp: {gradient_penalty}')
 
             mean_gp = sum(gps)/len(gps)
             self.gp_history.append(mean_gp)
