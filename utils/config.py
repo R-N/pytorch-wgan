@@ -19,6 +19,7 @@ def parse_args(s=None):
     parser.add_argument('--load_G', type=str, default='False', help='Path for loading Generator network')
     parser.add_argument('--generator_iters', type=int, default=10000, help='The number of iterations for generator in WGAN model.')
     parser.add_argument('--in_channels', type=int, default=100, help='The number of channels to sample')
+    parser.add_argument('--norm_G', type=bool, default=None, help='Use batch norm in generator')
     return check_args(parser.parse_args(s))
 
 
@@ -38,7 +39,11 @@ def check_args(args):
 
     if args.dataset == 'cifar' or args.dataset == 'stl10':
         args.channels = 3
+        if args.norm_G is None:
+            args.norm_G = True
     else:
         args.channels = 1
+        if args.norm_G is None:
+            args.norm_G = False
     args.cuda = True if args.cuda == 'True' else False
     return args
