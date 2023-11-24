@@ -15,14 +15,14 @@ import numpy as np
 SAVE_PER_TIMES = 100
 
 class Generator(torch.nn.Module):
-    def __init__(self, channels):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
         # Filters [1024, 512, 256]
         # Input_dim = 100
         # Output_dim = C (number of channels)
         self.main_module = nn.Sequential(
             # Z latent vector 100
-            nn.ConvTranspose2d(in_channels=100, out_channels=1024, kernel_size=4, stride=1, padding=0),
+            nn.ConvTranspose2d(in_channels=in_channels, out_channels=1024, kernel_size=4, stride=1, padding=0),
             #nn.BatchNorm2d(num_features=1024),
             nn.ReLU(True),
 
@@ -37,7 +37,7 @@ class Generator(torch.nn.Module):
             nn.ReLU(True),
 
             # State (256x16x16)
-            nn.ConvTranspose2d(in_channels=256, out_channels=channels, kernel_size=4, stride=2, padding=1))
+            nn.ConvTranspose2d(in_channels=256, out_channels=out_channels, kernel_size=4, stride=2, padding=1))
             # output of main module --> Image (Cx32x32)
 
         self.output = nn.Tanh()
@@ -108,9 +108,11 @@ class WGAN_GP:
     def __init__(self, args):
         super().__init__()
         print("WGAN_GradientPenalty init model.")
-        self.G = Generator(args.channels)
-        self.D = Discriminator(args.channels)
+        self.G = Generator(in_channels=args.in_channels, channels=args.channels)
+        self.D = Discriminator(channels=args.channels)
         self.C = args.channels
+
+        self.in_channels = args.in_channels
 
         # Check if cuda is available
         self.check_cuda(args.cuda)
@@ -195,9 +197,7 @@ class WGAN_GP:
                 if (images.size()[0] != self.batch_size):
                     continue
 
-                z = torch.rand((self.batch_size, 100, 1, 1))
-
-                images, z = self.get_torch_variable(images), self.get_torch_variable(z)
+                images = self.get_torch_variable(images)
 
                 #grad_0 = self.get_D_gradients()
                 # Train discriminator
@@ -208,7 +208,7 @@ class WGAN_GP:
                 #d_loss_real.backward(mone)
 
                 # Train with fake images
-                z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
+                z = self.get_torch_variable(torch.randn(self.batch_size, self.in_channels, 1, 1))
 
                 fake_images = self.G(z).detach()
                 d_loss_fake = self.D(fake_images)
@@ -258,7 +258,7 @@ class WGAN_GP:
             self.G.zero_grad()
             # train generator
             # compute loss with fake images
-            z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
+            z = self.get_torch_variable(torch.randn(self.batch_size, self.in_channels, 1, 1))
             fake_images = self.G(z)
             g_loss = self.D(fake_images)
             g_loss = g_loss.mean()
@@ -290,7 +290,7 @@ class WGAN_GP:
                     os.makedirs('training_result_images/')
 
                 # Denormalize images and save them in grid 8x8
-                z = self.get_torch_variable(torch.randn(800, 100, 1, 1))
+                z = self.get_torch_variable(torch.randn(64, self.in_channels, 1, 1))
                 samples = self.G(z)
                 samples = samples.mul(0.5).add(0.5)
                 samples = samples.data.cpu()[:64]
@@ -353,7 +353,7 @@ class WGAN_GP:
 
     def evaluate(self, test_loader, D_model_path, G_model_path):
         self.load_model(D_model_path, G_model_path)
-        z = self.get_torch_variable(torch.randn(self.batch_size, 100, 1, 1))
+        z = self.get_torch_variable(torch.randn(self.batch_size, self.in_channels, 1, 1))
         samples = self.G(z)
         samples = samples.mul(0.5).add(0.5)
         samples = samples.data.cpu()
@@ -443,9 +443,9 @@ class WGAN_GP:
 
         number_int = 10
         # interpolate between twe noise(z1, z2).
-        z_intp = torch.FloatTensor(1, 100, 1, 1)
-        z1 = torch.randn(1, 100, 1, 1)
-        z2 = torch.randn(1, 100, 1, 1)
+        z_intp = torch.FloatTensor(1, self.in_channels, 1, 1)
+        z1 = torch.randn(1, self.in_channels, 1, 1)
+        z2 = torch.randn(1, self.in_channels, 1, 1)
         if self.cuda:
             z_intp = z_intp.cuda()
             z1 = z1.cuda()
