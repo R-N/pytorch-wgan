@@ -88,8 +88,9 @@ class Discriminator(torch.nn.Module):
         return x.view(-1, 1024*4*4)
 
 
-class WGAN_GP(object):
+class WGAN_GP(nn.Module):
     def __init__(self, args):
+        super().__init__()
         print("WGAN_GradientPenalty init model.")
         self.G = Generator(args.channels)
         self.D = Discriminator(args.channels)
@@ -139,6 +140,12 @@ class WGAN_GP(object):
         else:
             self.cuda = False
 
+    def get_gradients(self):
+        grads = []
+        for param in self.parameters():
+            grads.append(param.grad.view(-1))
+        grads = torch.cat(grads)
+        return grads
 
     def train(self, train_loader):
         self.t_begin = t.time()
@@ -193,13 +200,14 @@ class WGAN_GP(object):
                 d_loss_fake.backward(one)
 
                 # Train with gradient penalty
-                fake_images.requires_grad_(True)
-                fake_images.retain_grad()
+                #fake_images.requires_grad_(True)
+                #fake_images.retain_grad()
                 gradient_penalty = self.calculate_gradient_penalty(images, fake_images)
                 gradient_penalty.backward()
-                gp_grad = fake_images.grad
+                gp_grad = self.get_gradients()
                 gp_grad = gp_grad.norm(2, dim=-1)
-                gp_grad = gp_grad.sum(dim=-1)
+                if gp_grad.dim() > 0:
+                    gp_grad = gp_grad.sum(dim=-1)
 
                 gps.append(gradient_penalty.item())
                 gp_grads.append(gp_grad.item())
